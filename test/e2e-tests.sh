@@ -25,6 +25,18 @@
 # project $PROJECT_ID, start knative in it, run the tests and delete the
 # cluster.
 
+set -ex
+
+if [[ "$RUN_GLOO" == "1" ]]; then
+  INSTALL_GLOO_YAML=${GLOO_YAML}
+  # these envars are required by
+  # https://github.com/knative/pkg/blob/master/test/spoof/spoof.go
+  # to give the address of the gloo proxy rather than istio
+  export GATEWAY_OVERRIDE="clusteringress-proxy"
+  export GATEWAY_NAMESPACE_OVERRIDE="gloo-system"
+  TEST_ARGS="--gateway clusteringress-proxy --gatewayNamespace=gloo-system"
+fi
+
 source $(dirname $0)/e2e-common.sh
 
 # Helper functions.
@@ -56,7 +68,14 @@ header "Running tests"
 failed=0
 
 # Run conformance and e2e tests.
-go_test_e2e -timeout=30m ./test/conformance ./test/e2e || failed=1
+TEST_ARGS=""
+if [[ -n ${INSTALL_GLOO_YAML} ]]; then
+  TEST_ARGS="--fail --gateway clusteringress-proxy --gatewayNamespace=gloo-system"
+fi
+
+go_test_e2e -timeout=30m ./test/conformance ./test/e2e ${TEST_ARGS} || failed=1
+
+go_test_e2e -timeout=30m ./test/conformance ./test/e2e ${TEST_ARGS} || failed=1
 
 # Run scale tests.
 go_test_e2e -timeout=10m ./test/scale || failed=1

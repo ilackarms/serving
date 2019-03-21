@@ -39,7 +39,9 @@ var ServingFlags = initializeServingFlags()
 
 // ServingEnvironmentFlags holds the e2e flags needed only by the serving repo.
 type ServingEnvironmentFlags struct {
-	ResolvableDomain bool // Resolve Route controller's `domainSuffix`
+	ResolvableDomain bool   // Resolve Route controller's `domainSuffix`
+	Gateway          string // The name of the Cluster Ingress service backing Knative Serving
+	GatewayNamespace string // The namespace of the Cluster Ingress service backing Knative Serving
 }
 
 func initializeServingFlags() *ServingEnvironmentFlags {
@@ -47,6 +49,12 @@ func initializeServingFlags() *ServingEnvironmentFlags {
 
 	flag.BoolVar(&f.ResolvableDomain, "resolvabledomain", false,
 		"Set this flag to true if you have configured the `domainSuffix` on your Route controller to a domain that will resolve to your test cluster.")
+
+	flag.StringVar(&f.Gateway, "gateway", "istio-ingressgateway",
+		"Provide the name of the Cluster Ingress service backing Knative Serving.")
+
+	flag.StringVar(&f.GatewayNamespace, "gatewayNamespace", "istio-system",
+		"Provide the namespace of the Cluster Ingress service backing Knative Serving.")
 
 	flag.Parse()
 	flag.Set("alsologtostderr", "true")

@@ -121,6 +121,12 @@ function install_knative_serving_standard() {
   kubectl apply -f "${INSTALL_BUILD_DIR}" || return 1
   kubectl apply -f "${INSTALL_PIPELINE_DIR}" || return 1
 
+  if [[ -n "${INSTALL_GLOO_YAML}" ]]; then
+    echo "Gloo YAML: ${{INSTALL_GLOO_YAML}"
+    echo ">> Bringing up Gloo"
+    kubectl apply -f "${INSTALL_GLOO_YAML}" || return 1
+  fi
+
   echo ">> Bringing up Serving"
   kubectl apply -f "${INSTALL_RELEASE_YAML}" || return 1
 
@@ -158,7 +164,12 @@ function install_knative_serving_standard() {
 
   wait_until_pods_running knative-serving || return 1
   wait_until_pods_running istio-system || return 1
-  wait_until_service_has_external_ip istio-system istio-ingressgateway
+  if [[ -n "${INSTALL_GLOO_YAML}" ]]; then
+    wait_until_pods_running gloo-system || return 1
+    wait_until_service_has_external_ip gloo-system clusteringress-proxy
+  else
+    wait_until_service_has_external_ip istio-system istio-ingressgateway
+  fi
 }
 
 # Uninstalls Knative Serving from the current cluster.
@@ -187,6 +198,11 @@ function knative_teardown() {
     echo ">> Bringing down Istio"
     kubectl delete --ignore-not-found=true -f "${INSTALL_ISTIO_YAML}" || return 1
     kubectl delete --ignore-not-found=true clusterrolebinding cluster-admin-binding
+
+    if [[ -n "${INSTALL_GLOO_YAML}" ]]; then
+      echo ">> Bringing down Gloo"
+      kubectl delete --ignore-not-found=true -f "${INSTALL_GLOO_YAML}" || return 1
+    fi
   fi
 }
 
@@ -194,6 +210,9 @@ function knative_teardown() {
 function test_setup() {
   echo ">> Creating test resources (test/config/)"
   ko apply -f test/config/ || return 1
+  if [[ -n "${INSTALL_GLOO_YAML}" ]]; then
+    ko apply -f test/config-gloo/ || return 1
+  fi
   echo ">> Creating test namespace"
   kubectl create namespace serving-tests
   ${REPO_ROOT_DIR}/test/upload-test-images.sh
@@ -203,6 +222,9 @@ function test_setup() {
 function test_teardown() {
   echo ">> Removing test resources (test/config/)"
   ko delete --ignore-not-found=true -f test/config/
+  if [[ -n "${INSTALL_GLOO_YAML}" ]]; then
+    ko delete --ignore-not-found=true -f test/config-gloo/
+  fi
   echo ">> Removing test namespace"
   kubectl delete all --all --ignore-not-found=true -n serving-tests
   kubectl delete --ignore-not-found=true namespace serving-tests

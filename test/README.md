@@ -175,6 +175,8 @@ these flags:
 - [`--tag`](#using-a-docker-tag)
 - [`--ingressendpoint`](#using-a-custom-ingress-endpoint)
 - [`--resolvabledomain`](#using-a-resolvable-domain)
+- [`--gateway`](#using-a-custom-gateway)
+- [`--gatewayNamespace`](#using-a-custom-gateway)
 
 ### Overridding docker repo
 
@@ -232,3 +234,10 @@ the header.
 If you have configured your cluster to use a resolvable domain, you can use the
 `--resolvabledomain` flag to indicate that the test should make requests
 directly against `Route.Status.Domain` and does not need to spoof the `Host`.
+
+### Using a custom gateway
+
+If the name or namespace of the clusteringress gateway service you wish to test against is
+not istio-system.istio-ingressgateway (e.g. in the case of testing against Gloo), 
+you can configure the tests to connect to a service with a different name / in a different namespace
+using the flags `--gateway` and `--gatewayNamespace`.

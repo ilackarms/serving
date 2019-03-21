@@ -58,8 +58,8 @@ func serviceHostname() string {
 	return noStderrShell("kubectl", "get", "rt", "route-example", "-o", "jsonpath={.status.domain}", "-n", test.ServingNamespace)
 }
 
-func ingressAddress(gateway string, addressType string) string {
-	return noStderrShell("kubectl", "get", "svc", gateway, "-n", "istio-system",
+func ingressAddress(gateway, gatewayNamespace string, addressType string) string {
+	return noStderrShell("kubectl", "get", "svc", gateway, "-n", gatewayNamespace,
 		"-o", fmt.Sprintf("jsonpath={.status.loadBalancer.ingress[*]['%s']}", addressType))
 }
 
@@ -103,7 +103,8 @@ func TestHelloWorldFromShell(t *testing.T) {
 	}
 
 	t.Log("Waiting for ingress to come up")
-	gateway := "istio-ingressgateway"
+	gateway := test.ServingFlags.Gateway
+	gatewayNamespace := test.ServingFlags.GatewayNamespace
 	// Wait for ingress to come up
 	ingressAddr := ""
 	serviceHost := ""
@@ -112,8 +113,8 @@ func TestHelloWorldFromShell(t *testing.T) {
 		if serviceHost == "" {
 			serviceHost = serviceHostname()
 		}
-		if ingressAddr = ingressAddress(gateway, "ip"); ingressAddr == "" {
-			ingressAddr = ingressAddress(gateway, "hostname")
+		if ingressAddr = ingressAddress(gateway, gatewayNamespace, "ip"); ingressAddr == "" {
+			ingressAddr = ingressAddress(gateway, gatewayNamespace, "hostname")
 		}
 		timeout -= checkInterval
 		time.Sleep(checkInterval)

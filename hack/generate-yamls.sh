@@ -46,6 +46,9 @@ readonly ISTIO_CRD_YAML=${YAML_REPO_ROOT}/third_party/istio-1.0.6/istio-crds.yam
 readonly ISTIO_YAML=${YAML_REPO_ROOT}/third_party/istio-1.0.6/istio.yaml
 readonly ISTIO_LEAN_YAML=${YAML_REPO_ROOT}/third_party/istio-1.0.6/istio-lean.yaml
 
+ # Location of Gloo YAML
+readonly GLOO_YAML=${YAML_REPO_ROOT}/third_party/gloo-0.6.16/gloo-knative.yaml
+
 # Set output directory
 if [[ -z "${YAML_OUTPUT_DIR:-}" ]]; then
   readonly YAML_OUTPUT_DIR="$(mktemp -d)"
@@ -109,3 +112,4 @@ echo "All manifests generated"
 ls -1 ${SERVING_YAML} > ${YAML_LIST_FILE}
 ls -1 ${YAML_OUTPUT_DIR}/*.yaml | grep -v ${SERVING_YAML} >> ${YAML_LIST_FILE}
 ls -1 ${ISTIO_CRD_YAML} ${ISTIO_YAML} ${ISTIO_LEAN_YAML} >> ${YAML_LIST_FILE}
+ls -1 ${GLOO_YAML} >> ${YAML_LIST_FILE}
